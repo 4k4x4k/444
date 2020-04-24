@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Auth::routes();
+
+Route::get('/',        'PagesController@welcome')->name('welcome');
+Route::get('/home',    'PagesController@home'   )->name('home');
+Route::get('/contact', 'PagesController@contact')->name('contact');
+
+Route::resource('subscribes', 'SubscribesController')->middleware('auth');

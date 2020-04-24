@@ -10,6 +10,21 @@ class User extends Authenticatable
 {
     use Notifiable;
 
+    // Az updated_at létrehozáskor történő beállításának elkerülése
+    public $timestamps = false;
+    public static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            $model->created_at = $model->freshTimestamp();
+        });
+
+        static::updating(function ($model) {
+            $model->updated_at = $model->freshTimestamp();
+        });
+    }
+
     /**
      * The attributes that are mass assignable.
      *
@@ -36,4 +51,9 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    public function subscribe()
+    {
+        $this->hasOne('App\Subscribe', 'fk_id_user');
+    }
 }

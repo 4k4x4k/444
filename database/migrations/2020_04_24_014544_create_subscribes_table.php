@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\{Schema, DB};
 
-class CreateUsersTable extends Migration
+class CreateSubscribesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,17 +13,14 @@ class CreateUsersTable extends Migration
      */
     public function up()
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('subscribes', function (Blueprint $table) {
             // $table->id();
             $table->unsignedMediumInteger('id', true);
             $table->string('name');
             $table->string('email', 40)->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password', 60);
-            $table->rememberToken();
+            $table->unsignedMediumInteger('fk_id_user')->nullable()->comment('Esetlegesen regisztrált felhasználó azonosítója');
             $table->timestamp('created_at')->useCurrent();
-            $table->timestamp('updated_at')->default(DB::raw('NULL ON UPDATE CURRENT_TIMESTAMP'))->nullable();
-            $table->softDeletes();
+            $table->foreign('fk_id_user')->references('id')->on('users')->onUpdate('cascade')->onDelete('set null');
         });
     }
 
@@ -34,6 +31,6 @@ class CreateUsersTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('subscribes');
     }
 }

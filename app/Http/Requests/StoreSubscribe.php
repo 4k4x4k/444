@@ -24,14 +24,13 @@ class StoreSubscribe extends FormRequest
     public function rules()
     {
         $rules = [
-            'name'    => 'required|string|max:50',
-            'email'   => 'bail|required|email|max:40|unique:App\Subscribe,email',
-            'user_id' => 'nullable|bail|integer|max:16777215|exists:App\User,id',
+            'last_name'  => 'nullable|string|max:50',
+            'first_name' => 'nullable|string|max:50',
+            'email'      => 'bail|required|email|max:40|unique:App\Subscribe,email',
+            'user_id'    => 'nullable|bail|integer|max:16777215|exists:App\User,id',
         ];
 
-        if ($this->getMethod() == 'PUT') {
-            $rules['email'] .=  ',' . request()->get('id') . ',id';
-        }
+        if ($this->getMethod() == 'PUT') $rules['email'] .= ',' . request()->get('email') . ',email';
 
         return $rules;
     }
@@ -47,7 +46,8 @@ class StoreSubscribe extends FormRequest
             'required'       => 'A :attribute kitöltése kötelező!',
             'string'         => 'A :attribute értékének szövegnek kell lennie!',
             'integer'        => 'A :attribute mező értékének természetes számnak kell lennie!',
-            'name.max'       => 'A :attribute mező értéke maximum :max karakter hosszú lehet!',
+            'last_name.max'  => 'A :attribute mező értéke maximum :max karakter hosszú lehet!',
+            'first_name.max' => 'A :attribute mező értéke maximum :max karakter hosszú lehet!',
             'email.max'      => 'A :attribute mező értéke maximum :max karakter hosszú lehet!',
             'user_id.max'    => 'A :attribute mező maximális értéke :max lehet!',
             'email.unique'   => 'Ez az e-mail cím már rajta van a listán!',
@@ -64,9 +64,10 @@ class StoreSubscribe extends FormRequest
     public function attributes()
     {
         return [
-            'name'    => 'feliratkozási név',
-            'email'   => 'feliratkozási e-mail cím',
-            'user_id' => 'felhasználó azonosító',
+            'last_name'  => 'vezetéknév',
+            'first_name' => 'keresztnév',
+            'email'      => 'feliratkozási e-mail cím',
+            'user_id'    => 'felhasználó azonosító',
         ];
     }
 }

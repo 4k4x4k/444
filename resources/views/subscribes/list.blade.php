@@ -8,18 +8,15 @@
                     <div class="card-header">{{$title ?? __('Feliratkozások')}}</div>
 
                     <div class="card-body">
-                        @if (Session::has('success'))
-                            <div class="alert alert-success" role="alert">
-                                {{ Session::get('success') }}
-                            </div>
-                        @endif
+                        @include('inc.messages')
 
                         @if($subscribes->count())
                             <table class="table table-striped">
                                 <tr>
-                                    <th>Feliratkozó neve</th>
-                                    <th>Feliratkozó e-mail címe</th>
-                                    <th>Feliratkozó felhasználó azonosítója</th>
+                                    <th>Vezetéknév</th>
+                                    <th>Keresztnév</th>
+                                    <th>E-mail cím</th>
+                                    <th>Felhasználó azonosítója</th>
                                     <th>Feliratkozás dátuma</th>
                                     <th></th>
                                     <th></th>
@@ -27,15 +24,16 @@
 
                                 @foreach($subscribes as $subscriber)
                                     <tr>
-                                        <td>{{$subscriber->name}}</td>
+                                        <td>{{$subscriber->last_name}}</td>
+                                        <td>{{$subscriber->first_name}}</td>
                                         <td>{{$subscriber->email}}</td>
                                         <td>{{$subscriber->fk_id_user}}</td>
                                         <td>{{$subscriber->created_at}}</td>
-                                        <td><a href="/subscribes/{{$subscriber->id}}/edit" class="btn btn-warning"><i class="fas fa-edit"></a></td>
+                                        <td><a href="/subscribes/{{$subscriber->email}}/edit" class="btn btn-warning"><i class="far fa-edit"></i></a></td>
                                         <td>
-                                            {!! Form::open(['action' => ['SubscribesController@destroy', $subscriber->id], 'method' => 'POST', 'class' => 'float-right']) !!}
+                                            {!! Form::open(['action' => ['SubscribesController@destroy', $subscriber->email], 'method' => 'POST', 'class' => 'float-right']) !!}
                                             {{Form::hidden('_method', 'DELETE')}}
-                                            <button type="submit" class="btn btn-danger"><i class="fas fa-trash"></button>
+                                            <button type="submit" class="btn btn-danger"><i class="far fa-trash-alt"></i></button>
                                             {!! Form::close() !!}
                                         </td>
                                     </tr>

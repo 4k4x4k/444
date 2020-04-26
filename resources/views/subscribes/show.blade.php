@@ -8,23 +8,22 @@
                     <div class="card-header">{{$title ?? __('Feliratkozások')}}</div>
 
                     <div class="card-body">
-                        @if (Session::has('success'))
-                            <div class="alert alert-success" role="alert">
-                                {{ Session::get('success') }}
-                            </div>
-                        @endif
+                        @include('inc.messages')
 
                         @if(!empty($subscriber))
-                            <h1>@isset($subscriber->fk_id_user) {{"[{$subscriber->fk_id_user}] "}} @endisset {{$subscriber->name}}</h1>
-                            <div>{!! $subscriber->email !!}</div>
+                            <h1>
+                                @isset($subscriber->fk_id_user) {{"[{$subscriber->fk_id_user}] "}} @endisset
+                                {{$subscriber->last_name}} {{$subscriber->first_name}}
+                            </h1>
+                            <div>{{$subscriber->email}}</div>
                             <small>{{$subscriber->created_at}}</small>
-                    
+
                             @if(Auth::user() && isset($subscriber->fk_id_user) && $subscriber->fk_id_user === auth()->user()->id)
-                                {!! Form::open(['action' => ['SubscribesController@destroy', $subscriber->id], 'method' => 'POST', 'class' => 'float-right']) !!}
+                                {!! Form::open(['action' => ['SubscribesController@destroy', $subscriber->email], 'method' => 'POST', 'class' => 'float-right']) !!}
                                     {{Form::hidden('_method', 'DELETE')}}
-                                    {{Form::submit('Törlés', ['class' => 'btn btn-danger'])}}
+                                    {{Form::button('<i class="far fa-trash-alt"></i>', ['type' => 'submit', 'class' => 'btn btn-danger'])}}
                                 {!! Form::close() !!}
-                                <a href="/subscribes/{{$subscriber->id}}/edit" class="btn btn-warning float-right">Szerkesztés</a>
+                                <a href="/subscribes/{{$subscriber->email}}/edit" class="btn btn-warning float-right mr-2"><i class="far fa-edit"></i></a>
                             @endif
                         @else
                             <p>A bejegyzés nem található.</p>

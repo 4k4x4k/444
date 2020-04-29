@@ -30,6 +30,9 @@ class SubscribesController extends Controller
             ];
 
             return view('subscribes.list', $data);
+        } catch (QueryException $ex) {
+            \Log::error($ex->getMessage());
+            return response()->with('error', $ex->getMessage());
         } catch (\Exception $ex) {
             return response()->with('error', $ex->getMessage());
         }
@@ -57,7 +60,7 @@ class SubscribesController extends Controller
         try {
             if (! $request->filled('email')) throw new \Exception('Az e-mail cím megadása kötelező');
 
-            $errors = [];
+            $error = [];
             $email  = $request->input('email');
             $FNAME  = $request->filled('first_name') ? $request->input('first_name') : '';
             $LNAME  = $request->filled('last_name')  ? $request->input('last_name')  : '';
@@ -68,8 +71,8 @@ class SubscribesController extends Controller
                 Newsletter::subscribeOrUpdate($email, compact(['FNAME', 'LNAME']), 'subscribers');
 
                 if (Newsletter::lastActionSucceeded()) \Log::info("{$email} feliratkoztatása a Mailchimpben sikeres.");
-                $errors[] = Newsletter::getLastError();
-            } else $errors[] = $email . ' e-mail cím már fel van iratkozva a Mailchimpben.';
+                $error[] = Newsletter::getLastError();
+            } else $error[] = $email . ' e-mail cím már fel van iratkozva a Mailchimpben.';
 
             // Feliratkozás rekord létrehozása a lokális adatbázisban
             $subscribes = new Subscribe();
@@ -79,12 +82,12 @@ class SubscribesController extends Controller
            #$subscribes->fk_id_user = $userId;
             $subscribes->save()
                 ? \Log::info("{$email} feliratkozásának mentése lokálisan sikeres.")
-                : $errors[] = "{$email} feliratkozásának mentése lokálisan sikertelen.";
+                : $error[] = "{$email} feliratkozásának mentése lokálisan sikertelen.";
 
             // Hibakezelés
-            if ($this->errorHandling('Feliratkozás hibalista', $errors)) {
-                return redirect('/subscribes')->with('error', $errors);
-                // throw new \Exception($errors);
+            if ($this->errorHandling('Feliratkozás hibalista', $error)) {
+                return redirect('/subscribes')->with(compact('error'));
+                // throw new \Exception($error);
             }
 
             return redirect('/subscribes')->with('success', 'Sikeres feliratkozás. :)');
@@ -157,7 +160,7 @@ class SubscribesController extends Controller
         try {
             if (! $email) throw new \Exception('Az e-mail cím megadása kötelező');
 
-            $errors = [];
+            $error = [];
             $email  = $request->input('email');
             $FNAME  = $request->filled('first_name') ? $request->input('first_name') : '';
             $LNAME  = $request->filled('last_name')  ? $request->input('last_name')  : '';
@@ -168,7 +171,7 @@ class SubscribesController extends Controller
                 Newsletter::subscribeOrUpdate($email, compact(['FNAME', 'LNAME']), 'subscribers');
 
                 if (Newsletter::lastActionSucceeded()) \Log::info("{$email} adatainak módosítása a Mailchimpben sikeres.");
-                $errors[] = Newsletter::getLastError();
+                $error[] = Newsletter::getLastError();
             }
 
             // Feliratkozás adatainak módosítása a lokális adatbázisban
@@ -179,13 +182,13 @@ class SubscribesController extends Controller
                #$subscriber->fk_id_user = $userId;
                 $subscriber->save()
                     ? \Log::info("{$email} feliratkozásának módosítása lokálisan sikeres.")
-                    : $errors[] = "{$email} feliratkozásának módosítása lokálisan sikertelen.";
-            } else $errors[] = "{$email} nem található a lokális feliratkozási listában.";
+                    : $error[] = "{$email} feliratkozásának módosítása lokálisan sikertelen.";
+            } else $error[] = "{$email} nem található a lokális feliratkozási listában.";
 
             // Hibakezelés
-            if ($this->errorHandling('Módosítás hibalista', $errors)) {
-                return redirect('/subscribes/' . $email)->with('error', $errors);
-                // throw new \Exception($errors);
+            if ($this->errorHandling('Módosítás hibalista', $error)) {
+                return redirect('/subscribes/' . $email)->with(compact('error'));
+                // throw new \Exception($error);
             }
 
             return redirect('/subscribes/' . $email)->with('success', 'A feliratkozási adatok módosítása sikeres.');
@@ -207,35 +210,36 @@ class SubscribesController extends Controller
     public function destroy(string $email)
     {
         try {
-            $subscriber = Subscribe::findOrFail($email);
-            $errors = [];
+            $error = [];
 
             // Leiratkozás Mailchimpben
             if (Newsletter::isSubscribed($email)) {
                 Newsletter::unsubscribe($email, 'subscribers');
 
                 if (Newsletter::lastActionSucceeded()) \Log::info("{$email} leiratkozása a Mailchimpben sikeres.");
-                $errors[] = Newsletter::getLastError();
+                $error[] = Newsletter::getLastError();
             } else {
-                $errors[] = "Nem található feliratkozó {$email} e-mail címmel a Mailchimp kiszolgálón.";
+                $error[] = "Nem található feliratkozó {$email} e-mail címmel a Mailchimp kiszolgálón.";
             }
 
             // Feliratkozás eltávolítása a lokális adatbázisból
-            if ($subscriber instanceof Subscribe) {
+            if (($subscriber = Subscribe::find($email)) instanceof Subscribe) {
                 $subscriber->delete()
                     ? \Log::info("{$email} feliratkozásának törlése lokálisan sikeres.")
-                    : $errors[] = "{$email} feliratkozásának törlése lokálisan sikertelen.";
+                    : $error[] = "{$email} feliratkozásának törlése lokálisan sikertelen.";
             } else {
-                $errors[] = "Nem található feliratkozó {$email} e-mail címmel a lokális listában.";
+                $error[] = "Nem található feliratkozó {$email} e-mail címmel a lokális listában.";
             }
 
             // Hibakezelés
-            if ($this->errorHandling('Leiratkozás hibalista', $errors)) {
-                return redirect('/subscribes')->with('error', $errors);
-                // throw new \Exception($errors);
+            if ($this->errorHandling('Leiratkozás hibalista', $error)) {
+                return redirect('/subscribes')->with(compact('error'));
+                // return response()->json(compact('error'));
+                // throw new \Exception($error);
             }
 
             return redirect('/subscribes')->with('success', 'Sikeres leiratkozás.');
+            // return response()->json(['success' => 'Sikeres leiratkozás.']);
         } catch (QueryException $ex) {
             \Log::error($ex->getMessage());
             return response()->with('error', $ex->getMessage());
@@ -250,13 +254,13 @@ class SubscribesController extends Controller
      * 
      * @param string $email
      */
-    public static function contactExists($email)
+    public static function contactExists($email, $listName = 'subscribers')
     {
         $mailchimp = Newsletter::getApi();
-        $listId = env('MAILCHIMP_LIST_ID');
+        $listId = config("newsletter.lists.{$listName}.id");
         $subscriberHash = $mailchimp::subscriberHash($email);
 
-        $response = $mailChimp->get("lists/{$listId}/members/{$subscriberHash}");
+        $response = $mailchimp->get("lists/{$listId}/members/{$subscriberHash}");
 
         return isset($response) ? true : false;
     }
